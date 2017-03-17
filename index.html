@@ -1,0 +1,254 @@
+<!doctype html>
+<html>
+
+<head>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+	<title>reveal.js</title>
+
+	<link rel="stylesheet" href="css/reveal.css">
+	<link rel="stylesheet" href="css/theme/black.css">
+
+	<!-- Theme used for syntax highlighting of code -->
+	<link rel="stylesheet" href="lib/css/zenburn.css">
+
+	<!-- Printing and PDF exports -->
+	<script>
+		var link = document.createElement('link');
+		link.rel = 'stylesheet';
+		link.type = 'text/css';
+		link.href = window.location.search.match(/print-pdf/gi) ? 'css/print/pdf.css' : 'css/print/paper.css';
+		document.getElementsByTagName('head')[0].appendChild(link);
+	</script>
+</head>
+
+<body>
+	<div class="reveal">
+		<div class="slides">
+			<section>Cours 5</section>
+			<section>
+				<h4>Les VIEWs</h4>
+				<p>
+					Rappel : Toute requête SQL renvoit un tableau.
+				</p>
+				<p>
+					Une View est la matérialisation d'une requête SQL
+				</p>
+			</section>
+			<section>
+				<h4>Syntaxe </h4>
+				<pre>
+					<code class="sql" data-trim>
+						CREATE VIEW nom AS SELECT ....
+					</code>
+				</pre>
+				<p>Exemple</p>
+				<pre>
+					<code class="sql" data-trim>
+DROP VIEW IF EXISTS individu_adresse;
+CREATE VIEW individu_adresse  AS
+SELECT
+  i.nom AS nom, i.prenom AS prenom,
+  a.label AS label, c.label AS commune,
+  c.cod_pos AS cod_pos, p.label AS pays
+FROM individu AS i
+INNER JOIN adresse AS a ON i.id=a.individu_id
+INNER JOIN commune AS c ON a.commune_cod_pos=c.cod_pos
+AND a.commune_cod_com=c.cod_com
+INNER JOIN pays AS p ON a.pays_id=p.id;
+
+					</code>
+				</pre>
+
+			</section>
+			<section>
+				<h4>Implementation</h4>
+				<div>
+					<p>
+					Elle dépend de la base de donnée. <br>
+					Les VIEWS en Sqlite sont en read-only <br>
+					Les autres BD permettent généralement l'écriture pour les champs ne resultant pas de calcul
+					et permettent les FK si une pk est disponible dans la VIEW
+					</p>
+
+				</div>
+			</section>
+
+			<section>
+				<h4>Les TRIGGERS</h4>
+				<p>Les Triggers sont des requêtes SQL qui seront appelées lors d'event sur des champs d'une table (insert, delete, update)</p>
+				<pre>
+						<code class="sql" data-trim>
+							CREATE TRIGGER nom EVENT OF champ ON table
+							(temporalité) (répetition) (restriction)
+							BEGIN
+								CODE;
+							END;
+
+						</code>
+					</pre>
+			</section>
+			<section>
+				<h4>EXEMPLE</h4>
+				<table>
+					<thead>
+					<tr>
+					<th>nb</th>
+					<th>sexe</th>
+					</tr>
+					</thead>
+					<tbody>
+					<tr>
+						<td>30</td>
+						<td>F</td>
+					</tr>
+					<tr>
+						<td>10</td>
+						<td>M</td>
+					</tr>
+					</tbody>
+				</table>
+				<pre>
+						<code class="sql" data-trim>
+							CREATE TRIGGER nombre INSERT OF id ON individu
+							AFTER
+							BEGIN
+								UPDATE nombre_individu_by_sexe
+								SET nb=(SELECT count(*) FROM individu
+									WHERE sexe=NEW.sexe)
+								WHERE sexe=NEW.sexe;
+							END;
+
+						</code>
+					</pre>
+				</p>
+			</section>
+			<section>
+				<h4>Utiliser du SQL dans un programme</h4>
+				<p>Une base de donnée fourni une lib pour se connecter et manipuler les données</p>
+				<p>La lib est encapsulée dans un driver correspondant à votre langage de programmation</p>
+				<p>Nous allons utiliser Python comme langage</p>
+				<p>Pour votre projet vous devrez utiliser Python</p>
+			</section>
+			<section>
+				<h4>Python</h4>
+				<p>
+					C'est un langage permettant de faire de la programmation impérative et objet. Nous allons utilisé
+					que la partie impérative.
+				</p>
+				<p>Les blocs de code sont délimité par indentation</p>
+			</section>
+			<section>
+				<h4>Exemple</h4>
+
+				<pre>
+						<code class="python" data-trim>
+							def ma_fonction(x):
+								return x * 2
+							result = ma_fonction(2)
+							print(result)
+
+						</code>
+					</pre>
+			</section>
+			<section>
+				<pre>
+						<code class="python" data-trim>
+							while True:
+								valeur = input("saisir un chiffre")
+								if valeur == 2:
+									print("super")
+								if valeur == "q":
+									break
+						</code>
+					</pre>
+			</section>
+			<section>
+				<pre>
+						<code class="python" data-trim>
+							liste = ['a', 'b', 'c']
+							for item in liste:
+								print(item)
+						</code>
+
+					</pre>
+				<pre>
+						<code class="python" data-trim>
+							dictionnaire = {'nom': 'guichon', 'prenom': 'paul',
+							'age': 34 }
+							for key, value in dictionnaire.items():
+								print(key, value)
+						</code>
+
+					</pre>
+			</section>
+			<section>
+				<h4>Sqlite</h4>
+
+				<pre>
+						<code class="python" data-trim>
+							import sqlite3
+							# on ouvre une connection
+							conn = sqlite3.connect('example.db')
+							# on recupère un curseur
+							c = conn.cursor()
+							# on peut executer les requetes sql
+							c.execute('''CREATE TABLE individu
+             				(nom text, prenom text)''')
+							c.commit()
+							# conn.close()
+						</code>
+					</pre>
+			</section>
+			<section>
+				<h4>Select</h4>
+				<p>Attention à la sécurité</p>
+				<pre>
+						<code class="python" data-trim>
+						
+							c.execute('SELECT * FROM stocks WHERE symbol=?', t)
+							# on récupère la première ligne
+							c.fetchone()
+							# on récupère tout le résultat
+							c.fetchall()
+							# on exécute x fois la requête pour chaque élément
+							c.executemany('INSERT INTO stocks VALUES (?,?,?,?,?)',
+								purchases)
+							# equivalent
+							for purchase in purchases:
+								c.execute('INSERT INTO stocks VALUES (?,?,?,?,?)',
+									purchase)
+
+						</code>
+					</pre>
+			</section>
+			<section>
+				<h4>A demain !!!!!</h4>
+			</section>
+			<section>
+				<h3>Finito. <br>A demain !!!!</h3>
+			</section>
+		</div>
+	</div>
+
+	<script src="lib/js/head.min.js"></script>
+	<script src="js/reveal.js"></script>
+
+	<script>
+		// More info https://github.com/hakimel/reveal.js#configuration
+		Reveal.initialize({
+			history: true,
+
+			// More info https://github.com/hakimel/reveal.js#dependencies
+			dependencies: [
+				{ src: 'plugin/markdown/marked.js' },
+				{ src: 'plugin/markdown/markdown.js' },
+				{ src: 'plugin/notes/notes.js', async: true },
+				{ src: 'plugin/highlight/highlight.js', async: true, callback: function () { hljs.initHighlightingOnLoad(); } }
+			]
+		});
+	</script>
+</body>
+
+</html>
